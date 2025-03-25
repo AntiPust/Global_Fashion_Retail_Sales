@@ -1,0 +1,1334 @@
+--Global Fashion Retail Sales - https://www.kaggle.com/datasets/ricgomes/global-fashion-retail-stores-dataset/data?select=customers.csv
+
+
+
+--Table customers.csv:
+
+--Customer ID - id клиента
+--Name - полное имя (может включать титулы/уважительные обращения, например, «господин» или профессиональные суффиксы)
+--Email - мейл клиента
+--Telephone - номер телефона с непоследовательным форматированием (смесь кодов стран и расширений)
+--City - страна 
+--Country - город
+--Gender - M/F/D(diverse)
+--Date Of Birth - дата рождения
+--Job Title - род занятий (необязательное поле; может быть пустым или содержать несколько ролей)
+
+
+--Table discounts.csv:
+
+--Start - дата начала действия скидки
+--End - дата окончания действия срока скидки
+--Discount - десятичное значение, представляющее ставку дисконтирования (0.2, значит скидка 20%)
+--Description - краткое описание дисконтной кампании
+--Category - категории товаров, на которые распространяется скидка (мужское, женское, детское)
+--Sub Category - подкатегория товара, к которой применяется скидка
+
+
+--Table employees.csv:
+
+--Employee ID - id сотрудника
+--Store ID - id магазина
+--Name - полное имя сотрудника
+--Position - позиция(должность)
+
+
+--Table products.csv:
+
+--Product ID - id продукта(товара)
+--Category - категория товара (M, F, D)
+--Sub Category - более конкретная классификация в категории (EN)
+--Description PT - описание товара на португальском языке
+--Description DE - описание товара на немецком языке
+--Description FR - описание товара на французском языке
+--Description ES - описание товара на испанском языке
+--Description EN - описание товара на английском языке
+--Description ZH - описание товара на китайском языке
+--Color - цвет товара
+--Sizes - доступные размеры товара
+--Production Cost - стоимость производства товара в USD (Float)
+
+
+--Table stores.csv:
+
+--Store ID - id магазина
+--Country - страна, где находится магазин
+--City - город, где находится магазин
+--Store Name - название магазина в формате Store [City]
+--Number of Employees - общее количество сотрудников, работающих в магазине
+--ZIP Code - почтовый индекс местонахождения магазина
+--Latitude - широта
+--Longitude - долгота
+
+
+--Table transactions.csv:
+
+--Invoice ID - id каждой транзакции, различающий продажи и возвраты. Он имеет следующий формат: 
+(INV для продаж или RET для возвратов) + Код страны + Идентификатор магазина + Последовательный счетчик. Это гарантирует, 
+что все товары из одной транзакции будут сгруппированы под одним счетом.
+--Line - порядковый номер, представляющий позицию продукта в счете-фактуре. Один счет-фактура может содержать несколько позиций
+--Customer ID - id клиента
+--Product ID - id товара
+--Size - размер товара
+--Color - цвет товара
+--Unit Price - цена за единицу товара (Float)
+--Quantity - количество единиц товара, приобретенного в рамках данной позиции счета
+--Date - дата и время транзакции (YYYY-MM-DD HH:MM:SS)
+--Discount - скидка, примененная к позиции, десятичная дробь (например, 0,30 = скидка 30%, 0,00 = нет скидки)
+--Line Total - общая стоимость позиции после применения всех скидок. Рассчитывается как: Unit Price × Quantity × (1 - Quantity)
+--Store ID - id магазина, где была совершена транзакция
+--Employee ID - id сотрудника магазина, обработавшего транзакцию
+--Currency - nрехбуквенный код валюты, используемый для транзакции (например, USD, EUR, CNY, GBP)
+--Currency Symbol - символ валюты транзакции (например, $, €, £, ¥)
+--SKU - уникальный инвентарный код, объединяющий идентификатор продукта, размер и цвет (например, FESH81-M-PINK = идентификатор продукта 81 + размер M + цвет PINK)
+--Transaction Type - тип транзакции (Sale / Return)
+--Payment Method - способ совершения транзакции (оплаты) - Credit Card / Cash
+--Invoice Total - общая стоимость транзакции (ID счета-фактуры). Это сумма всех значений Line Total для одного и того же Invoice ID. 
+Это значение повторяется во всех позициях строки в пределах одного и того же ID счета-фактуры.
+
+ 
+ 
+--Для начала поменяем названия колонок всех таблиц на маленькие буквы, что-то сократим для удобства, а также чтобы не было пробелов (поставим "_")
+
+
+--customers
+
+CREATE TABLE customers_new (
+    customer_id Int32,
+    name String,
+    email String,
+    telephone String,
+    city String,
+    country String,
+    gender String,
+    date_of_birth Date32,
+    job_title String
+) ENGINE = Log;
+
+INSERT INTO customers_new
+SELECT 
+    `Customer ID`,
+    Name,
+    Email,
+    Telephone,
+    City,
+    Country,
+    Gender,
+    `Date Of Birth`,
+    `Job Title`
+FROM 
+    customers;
+
+RENAME TABLE 
+    customers TO customers_old,
+    customers_new TO customers;
+    
+DROP TABLE customers_old; 
+
+
+--discounts
+
+CREATE TABLE discounts_new (
+    start_date Date,
+    end_date Date,
+    discont Float64,
+    description String,
+    category String,
+    sub_category String
+) ENGINE = Log;
+
+INSERT INTO discounts_new
+SELECT 
+    `Start`,
+    `End`,
+    `Discont`,
+    `Description`,
+    `Category`,
+    `Sub Category`
+FROM 
+    discounts;
+
+RENAME TABLE 
+    discounts TO discounts_old,
+    discounts_new TO discounts;
+    
+DROP TABLE discounts_old; 
+
+
+--employees
+
+CREATE TABLE employees_new (
+    employee_id Int32,
+    store_id Int32,
+    name_employee String,
+    position_employee String
+) ENGINE = Log;
+
+INSERT INTO employees_new
+SELECT 
+    `Employee ID`,
+    `Store ID`,
+    `Name`,
+    `Position`
+FROM 
+    employees;
+
+RENAME TABLE 
+    employees TO employees_old,
+    employees_new TO employees;
+    
+DROP TABLE employees_old; 
+
+
+--Для остальных таблиц я просто при создании таблицы сразу поменяю название столбцов
+
+
+--Общая информация по данным
+ 
+SELECT 
+	'count_customers' AS metric_name,
+	COUNT(DISTINCT customer_id) AS metric_value
+FROM 
+	customers
+UNION ALL
+SELECT 
+	'total_discounts' AS metric_name,
+	COUNT(discont) AS metric_value
+FROM 
+	discounts
+UNION ALL
+SELECT
+	'count_employees' AS metric_name,
+	COUNT(employee_id) AS metric_value
+FROM 
+	employees
+UNION ALL
+SELECT 
+	'count_products' AS metric_name,
+	COUNT(product_id) AS metric_value
+FROM products
+UNION ALL
+SELECT
+	'count_stores' AS metric_name,
+	COUNT(store_id) AS metric_value
+FROM stores
+UNION ALL
+SELECT
+	'count_countries' AS metric_name,
+	COUNT(DISTINCT country) AS metric_value
+FROM stores
+UNION ALL
+SELECT
+	'count_cities' AS metric_name,
+	COUNT(DISTINCT city) AS metric_value
+FROM stores	
+UNION ALL
+SELECT
+	'count_transactions' AS metric_name,
+	COUNT(DISTINCT invoice_id) AS metric_value
+FROM transactions;
+-->
+
+count_cities	35
+count_employees	403
+count_products	14950
+count_stores	35
+count_countries	7
+total_discounts	204
+count_customers	1643306
+count_transactions	4448433
+
+
+--Для подсчета и сравнения финансовых метрик магазинов мне нужно перевести показатели из валют EUR, GBP, CNY в USD. Я найду среднее значение курса валют 
+--на 2023, 2024, 2025 года, работа от 21.03.2025:
+--https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/eurofxref-graph-usd.en.html
+
+2023 год:
+EUR = USD * 1.0813
+GBP = USD * 1.0813 * 1.1497
+CNY = USD * 1.0813 * 0.1305
+
+2024 год:
+EUR = USD * 1.0824
+GBP = USD * 1.0824 * 1.1812
+CNY = USD * 1.0824 * 0.1284
+
+2025 год:
+EUR = USD * 1.0488
+GBP = USD * 1.0488 * 1.1965
+CNY = USD * 1.0488 * 0.1310
+
+За весь период:
+EUR = USD * 1.0786
+GBP = USD * 1.0786 * 1.1683
+CNY = USD * 1.0786 * 0.1296
+
+
+--Финансовые метрики
+
+
+
+--Общая сумма чистой выручки по магазинам со страной, городом и валютой по кварталам и годам, с добавлением столбца, в котором 
+--пересчитан курс валют на средний по годам в общей валюте USD (так как в таблице сразу отмечены возвраты с отрицательными суммами, будет проще)
+
+CREATE TABLE stores_revenues (
+    year UInt32,
+    quarter UInt32,
+    country_store String,
+    city_store String,
+    store_name String,
+    total_revenue Float64,
+    currency String,
+    usd_total_revenue Float64
+) ENGINE = MergeTree()
+ORDER BY (year, quarter);
+
+INSERT INTO stores_revenues
+WITH total_inf AS (
+SELECT 
+	toYear(t.invoice_date) AS year,
+	toQuarter(t.invoice_date) AS quarter,
+	s.country AS country_store,
+	s.city AS city_store,
+	s.store_name AS store_name,
+	ROUND(SUM(t.line_total), 2) AS total_revenue,
+	t.currency AS currency
+FROM 
+	transactions t LEFT JOIN stores s ON t.store_id = s.store_id
+GROUP BY year, quarter, country_store, city_store, store_name, currency 	
+)
+SELECT * 
+FROM (
+	SELECT
+		year,
+		quarter,
+		country_store,
+		city_store,
+		store_name,
+		total_revenue,
+		currency,
+		ROUND(IF(currency = 'EUR', total_revenue * 1.0813, 
+			IF(currency = 'GBP', total_revenue * 1.0813 * 1.1497, 
+				IF(currency = 'CNY', total_revenue * 1.0813 * 0.1305, total_revenue)
+			)
+		), 2) AS usd_total_revenue
+	FROM total_inf
+	WHERE year = 2023
+
+	UNION ALL 
+
+	SELECT
+		year,
+		quarter,
+		country_store,
+		city_store,
+		store_name,
+		total_revenue,
+		currency,
+		ROUND(IF(currency = 'EUR', total_revenue * 1.0824, 
+			IF(currency = 'GBP', total_revenue * 1.0824 * 1.1812, 
+				IF(currency = 'CNY', total_revenue * 1.0824 * 0.1284, total_revenue)
+			)
+		), 2) AS usd_total_revenue
+	FROM total_inf
+	WHERE year = 2024
+
+	UNION ALL 
+
+	SELECT
+		year,
+		quarter,
+		country_store,
+		city_store,
+		store_name,
+		total_revenue,
+		currency,
+		ROUND(IF(currency = 'EUR', total_revenue * 1.0488, 
+			IF(currency = 'GBP', total_revenue * 1.0488 * 1.1965, 
+				IF(currency = 'CNY', total_revenue * 1.0488 * 0.1310, total_revenue)
+			)
+		), 2) AS usd_total_revenue
+	FROM total_inf
+	WHERE year = 2025
+) AS full_data
+ORDER BY 
+	year, quarter, usd_total_revenue DESC;
+
+
+--Средний чек (Average Transaction Value), рассчитывается как общий доход, 
+--деленный на количество транзакций. Это помогает понять, сколько в среднем тратит покупатель за одно посещение
+--сведения по годам, названию магазина, стране, городе, среднем чеке, валюте и общей пересчитаной валюте USD
+
+WITH total_inf AS (
+SELECT 
+	toYear(t.invoice_date) AS year,
+	s.store_name AS store_name,
+	s.country AS country_store,
+	s.city AS city_store,
+	ROUND((SUM(t.line_total) / COUNT(t.line_total)), 2) AS avg_check,
+	t.currency AS currency
+FROM 
+	transactions t LEFT JOIN stores s ON t.store_id = s.store_id
+GROUP BY year, store_name, country_store, city_store, currency 	
+)
+SELECT * 
+FROM (
+	SELECT
+		year,
+		store_name,
+		country_store,
+		city_store,
+		avg_check,
+		currency,
+		ROUND(IF(currency = 'EUR', avg_check * 1.0813, 
+			IF(currency = 'GBP', avg_check * 1.0813 * 1.1497, 
+				IF(currency = 'CNY', avg_check * 1.0813 * 0.1305, avg_check)
+			)
+		), 2) AS usd_avg_check
+	FROM total_inf
+	WHERE year = 2023
+	
+	UNION ALL
+	
+	SELECT
+		year,
+		store_name,
+		country_store,
+		city_store,
+		avg_check,
+		currency,
+		ROUND(IF(currency = 'EUR', avg_check * 1.0824, 
+			IF(currency = 'GBP', avg_check * 1.0824 * 1.1812, 
+				IF(currency = 'CNY', avg_check * 1.0824 * 0.1284, avg_check)
+			)
+		), 2) AS usd_avg_check
+	FROM total_inf
+	WHERE year = 2024
+	
+	UNION ALL
+	
+	SELECT
+		year,
+		store_name,
+		country_store,
+		city_store,
+		avg_check,
+		currency,
+		ROUND(IF(currency = 'EUR', avg_check * 1.0488, 
+			IF(currency = 'GBP', avg_check * 1.0488 * 1.1965, 
+				IF(currency = 'CNY', avg_check * 1.0488 * 0.1310, avg_check)
+			)
+		), 2) AS usd_avg_check
+	FROM total_inf
+	WHERE year = 2025
+) AS full_data
+
+ORDER BY year, usd_avg_check DESC;
+
+
+--Тот же средний чек, только по годам и кварталам
+
+CREATE TABLE stores_avg_checks (
+    year UInt32,
+    quarter UInt32,
+    country_store String,
+    city_store String,
+    store_name String,
+    avg_check Float64,
+    currency String,
+    usd_avg_check Float64
+) ENGINE = MergeTree()
+ORDER BY (year, quarter);
+
+INSERT INTO stores_avg_checks
+WITH total_inf AS (
+SELECT 
+	toYear(t.invoice_date) AS year,
+	toQuarter(t.invoice_date) AS quarter,
+	s.country AS country_store,
+	s.city AS city_store,
+	s.store_name AS store_name,
+	ROUND((SUM(t.line_total) / COUNT(t.line_total)), 2) AS avg_check,
+	t.currency AS currency
+FROM 
+	transactions t LEFT JOIN stores s ON t.store_id = s.store_id
+GROUP BY year, quarter, country_store, city_store, store_name, currency 	
+)
+SELECT * 
+FROM (
+	SELECT
+		year,
+		quarter,
+		country_store,
+		city_store,
+		store_name,
+		avg_check,
+		currency,
+		ROUND(IF(currency = 'EUR', avg_check * 1.0813, 
+			IF(currency = 'GBP', avg_check * 1.0813 * 1.1497, 
+				IF(currency = 'CNY', avg_check * 1.0813 * 0.1305, avg_check)
+			)
+		), 2) AS usd_avg_check
+	FROM total_inf
+	WHERE year = 2023
+	
+	UNION ALL
+	
+	SELECT
+		year,
+		quarter,
+		country_store,
+		city_store,
+		store_name,
+		avg_check,
+		currency,
+		ROUND(IF(currency = 'EUR', avg_check * 1.0824, 
+			IF(currency = 'GBP', avg_check * 1.0824 * 1.1812, 
+				IF(currency = 'CNY', avg_check * 1.0824 * 0.1284, avg_check)
+			)
+		), 2) AS usd_avg_check
+	FROM total_inf
+	WHERE year = 2024
+	
+	UNION ALL
+	
+	SELECT
+		year,
+		quarter,
+		country_store,
+		city_store,
+		store_name,
+		avg_check,
+		currency,
+		ROUND(IF(currency = 'EUR', avg_check * 1.0488, 
+			IF(currency = 'GBP', avg_check * 1.0488 * 1.1965, 
+				IF(currency = 'CNY', avg_check * 1.0488 * 0.1310, avg_check)
+			)
+		), 2) AS usd_avg_check
+	FROM total_inf
+	WHERE year = 2025
+) AS full_data
+
+ORDER BY year, quarter, usd_avg_check DESC; 
+
+
+--Прибыль по магазинам со страной, городом и валютой по кварталам и годам, с добавлением столбца, в котором 
+--пересчитан курс валют на средний по годам в общей валюте USD, а также общая себестоимость и рентабельность
+--по убыванию рентабельности в процентах, прибыли, выручки
+--Будем считать, что в стоблце production_cost включены все затраты на стоимость единицы продукта, в том числе расходы на рекламу,
+--так как иных данных нет
+
+CREATE TABLE stores_profits (
+    year UInt32,
+    quarter UInt32,
+    country_store String,
+    city_store String,
+    store_name String,
+    total_revenue Float64,
+    currency String,
+    usd_store_cost Float64,
+    usd_store_revenue Float64,
+    usd_store_profit Float64,
+    store_profit_margin Float64 
+) ENGINE = MergeTree()
+ORDER BY (year, quarter);
+
+INSERT INTO stores_profits
+WITH total_inf AS (
+SELECT 
+	toYear(t.invoice_date) AS year,
+	toQuarter(t.invoice_date) AS quarter,
+	s.country AS country_store,
+	s.city AS city_store,
+	s.store_name AS store_name,
+	ROUND(SUM(t.line_total), 2) AS total_revenue,
+	t.currency AS currency,
+	ROUND(SUM(p.production_cost * t.quantity), 2) AS usd_store_cost
+FROM 
+	transactions t 
+LEFT JOIN 
+	stores s ON t.store_id = s.store_id
+LEFT JOIN 
+	products p ON t.product_id = p.product_id
+GROUP BY year, quarter, country_store, city_store, store_name, currency 	
+)
+SELECT
+	year,
+	quarter,
+	country_store,
+	city_store,
+	store_name,
+	total_revenue,
+	currency,
+	usd_store_cost,
+	usd_store_revenue,
+	ROUND(usd_store_revenue - usd_store_cost, 2) AS usd_store_profit,
+	ROUND((usd_store_profit * 100 / usd_store_revenue), 2) AS store_profit_margin
+FROM (
+	SELECT
+		year,
+		quarter,
+		country_store,
+		city_store,
+		store_name,
+		total_revenue,
+		currency,
+		usd_store_cost,
+		ROUND(IF(currency = 'EUR', total_revenue * 1.0813, 
+			IF(currency = 'GBP', total_revenue * 1.0813 * 1.1497, 
+				IF(currency = 'CNY', total_revenue * 1.0813 * 0.1305, total_revenue)
+			)
+		), 2) AS usd_store_revenue
+	FROM total_inf
+	WHERE year = 2023
+
+	UNION ALL 
+
+	SELECT
+		year,
+		quarter,
+		country_store,
+		city_store,
+		store_name,
+		total_revenue,
+		currency,
+		usd_store_cost,
+		ROUND(IF(currency = 'EUR', total_revenue * 1.0824, 
+			IF(currency = 'GBP', total_revenue * 1.0824 * 1.1812, 
+				IF(currency = 'CNY', total_revenue * 1.0824 * 0.1284, total_revenue)
+			)
+		), 2) AS usd_store_revenue
+	FROM total_inf
+	WHERE year = 2024
+
+	UNION ALL 
+
+	SELECT
+		year,
+		quarter,
+		country_store,
+		city_store,
+		store_name,
+		total_revenue,
+		currency,
+		usd_store_cost,
+		ROUND(IF(currency = 'EUR', total_revenue * 1.0488, 
+			IF(currency = 'GBP', total_revenue * 1.0488 * 1.1965, 
+				IF(currency = 'CNY', total_revenue * 1.0488 * 0.1310, total_revenue)
+			)
+		), 2) AS usd_store_revenue
+	FROM total_inf
+	WHERE year = 2025
+) AS full_data
+
+ORDER BY 
+	year, quarter, store_profit_margin DESC, usd_store_profit DESC, usd_store_revenue DESC;
+
+
+
+--Метрики работы с клиентами
+
+
+
+--a) Количество клиентов (Number of Customers) по кварталам и годам по убыванию количества уникальных клиентов
+--при подсчете метрики общего числа клиентов будем учитывать все уникальные клиенты, независимо от того, 
+--совершали ли они возвраты или нет, так как важно понимать, сколько уникальных клиентов взаимодействуют с бизнесом, 
+--даже если они вернули часть своих покупок
+
+CREATE TABLE stores_unique_customers (
+    year UInt32,
+    quarter UInt32,
+    country_store String,
+    city_store String,
+    store_name String,
+    count_unique_customers Float64 
+) ENGINE = MergeTree()
+ORDER BY (year, quarter);
+
+INSERT INTO stores_unique_customers
+SELECT 
+	toYear(t.invoice_date) AS year,
+	toQuarter(t.invoice_date) AS quarter,
+	s.country AS country_store,
+	s.city AS city_store,
+	s.store_name AS store_name,
+	COUNT(DISTINCT t.customer_id) AS count_unique_customers
+FROM 
+	transactions t
+LEFT JOIN
+	stores s ON t.store_id = s.store_id
+GROUP BY 
+	year, quarter, country_store, city_store, store_name
+ORDER BY 
+	year, quarter, count_unique_customers DESC;
+	
+
+--b) Средняя частота покупок (Purchase Frequency). Сколько раз в среднем клиент совершает покупку за период
+--Формула: средняя частота покупок = Общее количество покупок / Количество уникальных клиентов
+
+CREATE TABLE stores_avg_purchase_frequency (
+    year UInt32,
+    quarter UInt32,
+    country_store String,
+    city_store String,
+    store_name String,
+    avg_store_purchase_frequency Float64 
+) ENGINE = MergeTree()
+ORDER BY (year, quarter);
+
+INSERT INTO stores_avg_purchase_frequency
+SELECT
+	toYear(t.invoice_date) AS year,
+	toQuarter(t.invoice_date) AS quarter,
+	s.country AS country_store,
+	s.city AS city_store,
+	s.store_name AS store_name,
+	ROUND(COUNT(DISTINCT invoice_id) / COUNT(DISTINCT customer_id), 2) AS avg_store_purchase_frequency
+FROM 
+	transactions t
+LEFT JOIN
+	stores s ON t.store_id = s.store_id	
+GROUP BY 
+	year, quarter, country_store, city_store, store_name
+ORDER BY 
+	year, quarter, avg_store_purchase_frequency DESC;
+
+
+--c) Коэффициент удержания клиентов (Customer Retention Rate) Процент клиентов, которые совершили повторную покупку
+--Коэффициент удержания = (Количество повторных клиентов / Общее количество клиентов) * 100
+--найдем этот коэффициент, где отразим год, квартал, страну, город, название магазина,
+--количество повторных клиентов, общее количество клиентов и сам коэффициент в процентах
+
+CREATE TABLE stores_cust_ret_rate_percent (
+    year UInt32,
+    quarter UInt32,
+    country_store String,
+    city_store String,
+    store_name String,
+    store_repeated_customers UInt32,
+    store_total_customers UInt32,
+    customer_retention_rate_percent Float64
+) ENGINE = MergeTree()
+ORDER BY (year, quarter);
+
+INSERT INTO stores_cust_ret_rate_percent
+SELECT
+	toYear(t.invoice_date) AS year,
+	toQuarter(t.invoice_date) AS quarter,
+	s.country AS country_store,
+	s.city AS city_store,
+	s.store_name AS store_name,
+	COUNT(DISTINCT t.customer_id) AS store_repeated_customers,
+	COUNT(DISTINCT t.invoice_id) AS store_total_customers,
+	ROUND(COUNT(DISTINCT t.customer_id) * 100 / COUNT(DISTINCT t.invoice_id), 2) AS customer_retention_rate_percent
+FROM 
+	transactions t
+LEFT JOIN
+	stores s ON t.store_id = s.store_id	
+WHERE 
+	t.line = 1	
+GROUP BY 
+	year, quarter, country_store, city_store, store_name
+HAVING 
+	COUNT(DISTINCT t.customer_id) > 1	
+ORDER BY 
+	year, quarter, customer_retention_rate_percent DESC;
+
+
+--d) Средний срок жизни клиента (Customer Lifetime Value, CLV). Общая прибыль, которую приносит клиент за все время сотрудничества.
+--CLV = Средний чек * Средняя частота покупок * Средний срок жизни клиента. Возьмем средний срок жизни клиента = 3 года
+--получим данные: год, квартал, страна, город, название магазина, средний чек в разных валютах, название валюты, 
+--средняя частота покупок в магазине, средний чек в USD (исходя из среднегодовых курсов валют), средний срок жизни клиента магазина за квартал (store_usd_clv)
+
+CREATE TABLE stores_customer_clv (
+    year UInt32,
+    quarter UInt32,
+    country_store String,
+    city_store String,
+    store_name String,
+    avg_check Float64,
+    currency String,
+    avg_store_purchase_frequency Float64,
+    usd_avg_check Float64,
+    store_usd_clv Float64
+) ENGINE = MergeTree()
+ORDER BY (year, quarter);
+
+INSERT INTO stores_customer_clv
+WITH total_inf AS (
+SELECT 
+	toYear(t.invoice_date) AS year,
+	toQuarter(t.invoice_date) AS quarter,
+	s.country AS country_store,
+	s.city AS city_store,
+	s.store_name AS store_name,
+	ROUND((SUM(t.line_total) / COUNT(t.line_total)), 2) AS avg_check,
+	t.currency AS currency,
+	ROUND(COUNT(DISTINCT t.invoice_id) / COUNT(DISTINCT t.customer_id), 2) AS avg_store_purchase_frequency
+FROM 
+	transactions t LEFT JOIN stores s ON t.store_id = s.store_id
+GROUP BY year, quarter, country_store, city_store, store_name, currency 	
+)
+SELECT * 
+FROM (
+	SELECT
+		year,
+		quarter,
+		country_store,
+		city_store,
+		store_name,
+		avg_check,
+		currency,
+		avg_store_purchase_frequency,
+		ROUND(IF(currency = 'EUR', avg_check * 1.0813, 
+			IF(currency = 'GBP', avg_check * 1.0813 * 1.1497, 
+				IF(currency = 'CNY', avg_check * 1.0813 * 0.1305, avg_check)
+			)
+		), 2) AS usd_avg_check,
+		ROUND(avg_store_purchase_frequency * 3 * 
+			ROUND(IF(currency = 'EUR', avg_check * 1.0813, 
+				IF(currency = 'GBP', avg_check * 1.0813 * 1.1497, 
+					IF(currency = 'CNY', avg_check * 1.0813 * 0.1305, avg_check)
+			)
+		), 2), 2) AS store_usd_clv 
+	FROM total_inf
+	WHERE year = 2023
+	
+	UNION ALL
+	
+	SELECT
+		year,
+		quarter,
+		country_store,
+		city_store,
+		store_name,
+		avg_check,
+		currency,
+		avg_store_purchase_frequency,
+		ROUND(IF(currency = 'EUR', avg_check * 1.0824, 
+			IF(currency = 'GBP', avg_check * 1.0824 * 1.1812, 
+				IF(currency = 'CNY', avg_check * 1.0824 * 0.1284, avg_check)
+			)
+		), 2) AS usd_avg_check,
+		ROUND(avg_store_purchase_frequency * 3 *
+			ROUND(IF(currency = 'EUR', avg_check * 1.0824, 
+			IF(currency = 'GBP', avg_check * 1.0824 * 1.1812, 
+				IF(currency = 'CNY', avg_check * 1.0824 * 0.1284, avg_check)
+			)
+		), 2), 2) AS store_usd_clv
+	FROM total_inf
+	WHERE year = 2024
+	
+	UNION ALL
+	
+	SELECT
+		year,
+		quarter,
+		country_store,
+		city_store,
+		store_name,
+		avg_check,
+		currency,
+		avg_store_purchase_frequency,
+		ROUND(IF(currency = 'EUR', avg_check * 1.0488, 
+			IF(currency = 'GBP', avg_check * 1.0488 * 1.1965, 
+				IF(currency = 'CNY', avg_check * 1.0488 * 0.1310, avg_check)
+			)
+		), 2) AS usd_avg_check,
+		ROUND(avg_store_purchase_frequency * 3 *
+			ROUND(IF(currency = 'EUR', avg_check * 1.0488, 
+			IF(currency = 'GBP', avg_check * 1.0488 * 1.1965, 
+				IF(currency = 'CNY', avg_check * 1.0488 * 0.1310, avg_check)
+			)
+		), 2), 2) AS store_usd_clv
+	FROM total_inf
+	WHERE year = 2025
+) AS full_data
+
+ORDER BY year, quarter, store_usd_clv DESC;
+
+
+
+--Товарные метрики
+
+
+--b) Доля продаж по категориям (Sales by Category) Процент выручки, который приходится на каждую категорию товаров.
+--Доля категории = (Выручка по категории / Общая выручка) * 100
+--В итоге получаем год, квартал, страну, город, название магазина, общую выручку в разных валютах, категорию,
+--выручку магазина по категории в USD, общую выручку магазина и долю категории от общей выручки магазина в процентах
+--с разбивкой по году, кварталу, стране, городу, названию магазина, категории  
+
+
+CREATE TABLE stores_category_sales (
+    year UInt32,
+    quarter UInt32,
+    country_store String,
+    city_store String,
+    store_name String,
+    total_revenue Float64,
+    currency String,
+    category String,
+    usd_total_revenue Float64,
+    total_usd_store_revenue Float64,
+    sales_by_category_percent Float64
+) ENGINE = MergeTree()
+ORDER BY (year, quarter);
+
+INSERT INTO stores_category_sales
+WITH total_inf AS (
+SELECT 
+	toYear(t.invoice_date) AS year,
+	toQuarter(t.invoice_date) AS quarter,
+	s.country AS country_store,
+	s.city AS city_store,
+	s.store_name AS store_name,
+	ROUND(SUM(t.line_total), 2) AS total_revenue,
+	t.currency AS currency,
+	p.category AS category
+FROM 
+	transactions t 
+LEFT JOIN 
+	stores s ON t.store_id = s.store_id
+LEFT JOIN 
+	products p ON t.product_id = p.product_id
+GROUP BY year, quarter, country_store, city_store, store_name, currency, category 	
+)
+SELECT
+	year,
+	quarter,
+	country_store,
+	city_store,
+	store_name,
+	total_revenue,
+	currency,
+	category,
+	usd_total_revenue,
+	total_usd_store_revenue,
+	ROUND(usd_total_revenue * 100 / total_usd_store_revenue, 2) AS sales_by_category_percent
+FROM (
+	SELECT
+		year,
+		quarter,
+		country_store,
+		city_store,
+		store_name,
+		total_revenue,
+		currency,
+		category,
+		ROUND(IF(currency = 'EUR', total_revenue * 1.0813, 
+			IF(currency = 'GBP', total_revenue * 1.0813 * 1.1497, 
+				IF(currency = 'CNY', total_revenue * 1.0813 * 0.1305, total_revenue)
+			)
+		), 2) AS usd_total_revenue,
+		ROUND(SUM(ROUND(IF(currency = 'EUR', total_revenue * 1.0813, 
+			IF(currency = 'GBP', total_revenue * 1.0813 * 1.1497, 
+				IF(currency = 'CNY', total_revenue * 1.0813 * 0.1305, total_revenue)
+			)
+		), 2)) over (partition BY year, quarter, country_store, city_store, store_name), 2) AS total_usd_store_revenue
+	FROM total_inf
+	WHERE year = 2023
+
+	UNION ALL 
+
+	SELECT
+		year,
+		quarter,
+		country_store,
+		city_store,
+		store_name,
+		total_revenue,
+		currency,
+		category,
+		ROUND(IF(currency = 'EUR', total_revenue * 1.0824, 
+			IF(currency = 'GBP', total_revenue * 1.0824 * 1.1812, 
+				IF(currency = 'CNY', total_revenue * 1.0824 * 0.1284, total_revenue)
+			)
+		), 2) AS usd_total_revenue,
+		ROUND(SUM(ROUND(IF(currency = 'EUR', total_revenue * 1.0824, 
+			IF(currency = 'GBP', total_revenue * 1.0824 * 1.1812, 
+				IF(currency = 'CNY', total_revenue * 1.0824 * 0.1284, total_revenue)
+			)
+		), 2)) over (partition BY year, quarter, country_store, city_store, store_name), 2) AS total_usd_store_revenue
+	FROM total_inf
+	WHERE year = 2024
+
+	UNION ALL 
+
+	SELECT
+		year,
+		quarter,
+		country_store,
+		city_store,
+		store_name,
+		total_revenue,
+		currency,
+		category,
+		ROUND(IF(currency = 'EUR', total_revenue * 1.0488, 
+			IF(currency = 'GBP', total_revenue * 1.0488 * 1.1965, 
+				IF(currency = 'CNY', total_revenue * 1.0488 * 0.1310, total_revenue)
+			)
+		), 2) AS usd_total_revenue,
+		ROUND(SUM(ROUND(IF(currency = 'EUR', total_revenue * 1.0488, 
+			IF(currency = 'GBP', total_revenue * 1.0488 * 1.1965, 
+				IF(currency = 'CNY', total_revenue * 1.0488 * 0.1310, total_revenue)
+			)
+		), 2)) over (partition BY year, quarter, country_store, city_store, store_name), 2) AS total_usd_store_revenue
+	FROM total_inf
+	WHERE year = 2025
+) AS full_data
+ORDER BY 
+	year, quarter, total_usd_store_revenue DESC;
+
+
+
+--Операционные метрики
+
+
+
+--c) Процент возвратов (Return Rate)
+--Процент товаров, которые клиенты вернули. Процент возвратов = (Количество возвратов / Количество продаж) * 100
+--сделаем выборку по году, кварталу, стране, городе, названии магазина, количестве продаж, 
+--количестве возвратов, проценте возвратов
+
+CREATE TABLE stores_returned_sales (
+    year UInt32,
+    quarter UInt32,
+    country_store String,
+    city_store String,
+    store_name String,
+    count_sales UInt32,
+    count_returned_products UInt32,
+    percent_returned_products Float64
+) ENGINE = MergeTree()
+ORDER BY (year, quarter);
+
+INSERT INTO stores_returned_sales
+SELECT 
+	toYear(t.invoice_date) AS year,
+	toQuarter(t.invoice_date) AS quarter,
+	s.country AS country_store,
+	s.city AS city_store,
+	s.store_name AS store_name,
+	COUNT(DISTINCT CASE WHEN t.invoice_id LIKE 'INV%' THEN t.invoice_id END) AS count_sales,
+    COUNT(DISTINCT CASE WHEN t.invoice_id LIKE 'RET%' THEN t.invoice_id END) AS count_returned_products,
+    ROUND(COUNT(DISTINCT CASE WHEN t.invoice_id LIKE 'RET%' THEN t.invoice_id END) * 100 / 
+    COUNT(DISTINCT CASE WHEN t.invoice_id LIKE 'INV%' THEN t.invoice_id END), 2) AS percent_returned_products
+FROM 
+	transactions t 
+LEFT JOIN 
+	stores s ON t.store_id = s.store_id
+GROUP BY year, quarter, country_store, city_store, store_name
+ORDER BY year, quarter, count_returned_products DESC; 
+
+
+
+--Метрики эффективности персонала
+
+
+--a) Выручка на сотрудника (Revenue per Employee) Сколько выручки генерирует один сотрудник
+--Выручка на сотрудника = Чистая выручка / Количество сотрудников
+--сведения по году, кварталу, стране, городу, названию магазина, выручке магазина в валюте, валюте,
+--количеству сотрудников магазина, чистой выручке магазина за квартал, выручке на сотрудника магазина
+
+CREATE TABLE stores_employee_revenues (
+    year UInt32,
+    quarter UInt32,
+    country_store String,
+    city_store String,
+    store_name String,
+    total_revenue Float64,
+    currency String,
+    count_store_employees UInt32,
+    usd_total_revenue Float64,
+    employee_revenue_usd Float64
+) ENGINE = MergeTree()
+ORDER BY (year, quarter);
+
+INSERT INTO stores_employee_revenues
+WITH total_inf AS (
+SELECT 
+	toYear(t.invoice_date) AS year,
+	toQuarter(t.invoice_date) AS quarter,
+	s.country AS country_store,
+	s.city AS city_store,
+	s.store_name AS store_name,
+	ROUND(SUM(t.line_total), 2) AS total_revenue,
+	t.currency AS currency,
+	s.num_of_employees AS count_store_employees
+FROM 
+	transactions t 
+LEFT JOIN 
+	stores s ON t.store_id = s.store_id
+GROUP BY year, quarter, country_store, city_store, store_name, currency, count_store_employees 	
+)
+SELECT * 
+FROM (
+	SELECT
+		year,
+		quarter,
+		country_store,
+		city_store,
+		store_name,
+		total_revenue,
+		currency,
+		count_store_employees,
+		ROUND(IF(currency = 'EUR', total_revenue * 1.0813, 
+			IF(currency = 'GBP', total_revenue * 1.0813 * 1.1497, 
+				IF(currency = 'CNY', total_revenue * 1.0813 * 0.1305, total_revenue)
+			)
+		), 2) AS usd_total_revenue,
+		ROUND(ROUND(IF(currency = 'EUR', total_revenue * 1.0813, 
+			IF(currency = 'GBP', total_revenue * 1.0813 * 1.1497, 
+				IF(currency = 'CNY', total_revenue * 1.0813 * 0.1305, total_revenue)
+			)
+		), 2) / count_store_employees, 2) AS employee_revenue_usd 
+	FROM total_inf
+	WHERE year = 2023
+
+	UNION ALL 
+
+	SELECT
+		year,
+		quarter,
+		country_store,
+		city_store,
+		store_name,
+		total_revenue,
+		currency,
+		count_store_employees,
+		ROUND(IF(currency = 'EUR', total_revenue * 1.0824, 
+			IF(currency = 'GBP', total_revenue * 1.0824 * 1.1812, 
+				IF(currency = 'CNY', total_revenue * 1.0824 * 0.1284, total_revenue)
+			)
+		), 2) AS usd_total_revenue,
+		ROUND(ROUND(IF(currency = 'EUR', total_revenue * 1.0824, 
+			IF(currency = 'GBP', total_revenue * 1.0824 * 1.1812, 
+				IF(currency = 'CNY', total_revenue * 1.0824 * 0.1284, total_revenue)
+			)
+		), 2) / count_store_employees, 2) AS employee_revenue_usd
+	FROM total_inf
+	WHERE year = 2024
+
+	UNION ALL 
+
+	SELECT
+		year,
+		quarter,
+		country_store,
+		city_store,
+		store_name,
+		total_revenue,
+		currency,
+		count_store_employees,
+		ROUND(IF(currency = 'EUR', total_revenue * 1.0488, 
+			IF(currency = 'GBP', total_revenue * 1.0488 * 1.1965, 
+				IF(currency = 'CNY', total_revenue * 1.0488 * 0.1310, total_revenue)
+			)
+		), 2) AS usd_total_revenue,
+		ROUND(ROUND(IF(currency = 'EUR', total_revenue * 1.0488, 
+			IF(currency = 'GBP', total_revenue * 1.0488 * 1.1965, 
+				IF(currency = 'CNY', total_revenue * 1.0488 * 0.1310, total_revenue)
+			)
+		), 2) / count_store_employees, 2) AS employee_revenue_usd
+	FROM total_inf
+	WHERE year = 2025
+) AS full_data
+ORDER BY 
+	year, quarter, employee_revenue_usd DESC;
+	
+
+--b) Продажи на сотрудника (Sales per Employee) Сколько продаж совершает один сотрудник
+--Продажи на сотрудника = Количество продаж / Количество сотрудников
+--выведем информацию по году, кварталу, стране, городе, названию магазина,
+--количестве сотрудников магазина, количестве продаж магазина за квартал, продажи на сотрудника в квартал
+
+CREATE TABLE stores_employee_sales (
+    year UInt32,
+    quarter UInt32,
+    country_store String,
+    city_store String,
+    store_name String,
+    count_store_employees UInt32,
+    count_store_sales UInt32,
+    store_employee_sales Float64
+) ENGINE = MergeTree()
+ORDER BY (year, quarter);
+
+INSERT INTO stores_employee_sales
+WITH total_inf AS (
+SELECT 
+	toYear(t.invoice_date) AS year,
+	toQuarter(t.invoice_date) AS quarter,
+	s.country AS country_store,
+	s.city AS city_store,
+	s.store_name AS store_name,
+	s.num_of_employees AS count_store_employees,
+	COUNT(DISTINCT t.invoice_id) AS count_store_sales
+FROM 
+	transactions t 
+LEFT JOIN 
+	stores s ON t.store_id = s.store_id
+WHERE 
+	t.invoice_id LIKE 'INV%'	
+GROUP BY year, quarter, country_store, city_store, store_name, count_store_employees 	
+)
+SELECT
+	year,
+	quarter,
+	country_store,
+	city_store,
+	store_name,
+	count_store_employees,
+	count_store_sales,
+	ROUND(count_store_sales / count_store_employees, 1) AS store_employee_sales 
+FROM 
+	total_inf
+ORDER BY 
+	year, quarter, store_employee_sales DESC;
+	
+	
+	
+--Ну и последнее. Предположим, что сеть замотивировала своих сотрудников конкурсом, в котором по каждой стране выбирается лучший
+--сотрудник (продавший на самую большую сумму в USD товаров за год), попадающий в международный финал.
+--Далее идет конкурс между 7 сотрудниками по одному от каждой страны. В итоге в конкурсе участвует 35 магазинов из 7 стран.
+--Вычислим эти данные за 2023 и 2024 отдельно
+
+
+--топ 7 работников за 2023 год
+
+CREATE TABLE top_employees_2023 (
+    year UInt32,
+    country_store String,
+    city_store String,
+    store_name String,
+    name_employee String,
+    position_employee String,
+    year_employee_sales UInt32,
+    employee_sales_rank_country UInt32,
+    employee_revenue Float64,
+    currency String,
+    usd_employee_revenue Float64,
+    employee_revenue_rank_country UInt32
+) ENGINE = MergeTree()
+ORDER BY (usd_employee_revenue);
+
+INSERT INTO top_employees_2023
+WITH total_inf AS (
+SELECT
+	toYear(t.invoice_date) AS year,
+	s.country AS country_store,
+	s.city AS city_store,
+	s.store_name AS store_name,
+	e.name_employee AS name_employee,
+	e.position_employee AS position_employee,
+	COUNT(DISTINCT t.invoice_id) AS year_employee_sales,
+	DENSE_RANK() OVER (PARTITION BY s.country ORDER BY COUNT(DISTINCT t.invoice_id) DESC) AS employee_sales_rank_country,
+	ROUND(SUM(t.line_total), 2) AS employee_revenue,
+	t.currency AS currency
+FROM 
+	transactions t
+LEFT JOIN
+	stores s ON t.store_id = s.store_id 
+LEFT JOIN 
+	employees e ON t.employee_id = e.employee_id
+WHERE
+	year = 2023
+GROUP BY 
+	year, country_store, city_store, store_name, name_employee, position_employee, currency
+)
+SELECT
+	year,
+	country_store,
+	city_store,
+	store_name,
+	name_employee,
+	position_employee,
+	year_employee_sales,
+	employee_sales_rank_country,
+	employee_revenue,
+	currency,
+	ROUND(IF(currency = 'EUR', employee_revenue * 1.0813, 
+			IF(currency = 'GBP', employee_revenue * 1.0813 * 1.1497, 
+				IF(currency = 'CNY', employee_revenue * 1.0813 * 0.1305, employee_revenue)
+			)
+		), 2) AS usd_employee_revenue,
+	DENSE_RANK() OVER (PARTITION BY country_store ORDER BY ROUND(IF(currency = 'EUR', employee_revenue * 1.0813, 
+			IF(currency = 'GBP', employee_revenue * 1.0813 * 1.1497, 
+				IF(currency = 'CNY', employee_revenue * 1.0813 * 0.1305, employee_revenue)
+			)
+		), 2) DESC) AS employee_revenue_rank_country
+FROM total_inf
+ORDER BY employee_revenue_rank_country ASC, usd_employee_revenue DESC
+LIMIT 7;	
+
+
+--топ 7 работников за 2024 год
+
+CREATE TABLE top_employees_2024 (
+    year UInt32,
+    country_store String,
+    city_store String,
+    store_name String,
+    name_employee String,
+    position_employee String,
+    year_employee_sales UInt32,
+    employee_sales_rank_country UInt32,
+    employee_revenue Float64,
+    currency String,
+    usd_employee_revenue Float64,
+    employee_revenue_rank_country UInt32
+) ENGINE = MergeTree()
+ORDER BY (usd_employee_revenue);
+
+INSERT INTO top_employees_2024
+WITH total_inf AS (
+SELECT
+	toYear(t.invoice_date) AS year,
+	s.country AS country_store,
+	s.city AS city_store,
+	s.store_name AS store_name,
+	e.name_employee AS name_employee,
+	e.position_employee AS position_employee,
+	COUNT(DISTINCT t.invoice_id) AS year_employee_sales,
+	DENSE_RANK() OVER (PARTITION BY s.country ORDER BY COUNT(DISTINCT t.invoice_id) DESC) AS employee_sales_rank_country,
+	ROUND(SUM(t.line_total), 2) AS employee_revenue,
+	t.currency AS currency
+FROM 
+	transactions t
+LEFT JOIN
+	stores s ON t.store_id = s.store_id 
+LEFT JOIN 
+	employees e ON t.employee_id = e.employee_id
+WHERE
+	year = 2024
+GROUP BY 
+	year, country_store, city_store, store_name, name_employee, position_employee, currency
+)
+SELECT
+	year,
+	country_store,
+	city_store,
+	store_name,
+	name_employee,
+	position_employee,
+	year_employee_sales,
+	employee_sales_rank_country,
+	employee_revenue,
+	currency,
+	ROUND(IF(currency = 'EUR', employee_revenue * 1.0824, 
+			IF(currency = 'GBP', employee_revenue * 1.0824 * 1.1812, 
+				IF(currency = 'CNY', employee_revenue * 1.0824 * 0.1284, employee_revenue)
+			)
+		), 2) AS usd_employee_revenue,
+	DENSE_RANK() OVER (PARTITION BY country_store ORDER BY ROUND(IF(currency = 'EUR', employee_revenue * 1.0824, 
+			IF(currency = 'GBP', employee_revenue * 1.0824 * 1.1812, 
+				IF(currency = 'CNY', employee_revenue * 1.0824 * 0.1284, employee_revenue)
+			)
+		), 2) DESC) AS employee_revenue_rank_country
+FROM total_inf
+ORDER BY employee_revenue_rank_country ASC, usd_employee_revenue DESC
+LIMIT 7;
+
+	
+
+--Визуализируем полученные данные в Superset--
